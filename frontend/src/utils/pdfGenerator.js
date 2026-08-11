@@ -31,22 +31,25 @@ export const downloadResumePDF = async (elementId, fileName = "resume.pdf") => {
             format: "a4",
         });
 
+        const margin = 18;
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = pdfWidth;
-        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+        const contentWidth = pdfWidth - margin * 2;
+        const contentHeight = pdfHeight - margin * 2;
+        const imgWidth = contentWidth;
+        const imgHeight = (canvas.height * contentWidth) / canvas.width;
 
         let heightLeft = imgHeight;
-        let position = 0;
+        let position = margin;
 
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
+        pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
+        heightLeft -= contentHeight;
 
         while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
+            position = margin - (imgHeight - heightLeft);
             pdf.addPage();
-            pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-            heightLeft -= pdfHeight;
+            pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
+            heightLeft -= contentHeight;
         }
 
         pdf.save(fileName);
