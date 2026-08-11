@@ -1,6 +1,6 @@
 # 🚀 AI Resume Builder
 
-> An AI-powered resume builder that goes beyond CRUD — built for CSE portfolios and placement-ready. Features 15+ resume templates, AI writing assistant, ATS score checker, streaming AI chat, mock interviews, and much more.
+> An AI-powered resume builder that goes beyond CRUD — built for CSE portfolios and placement-ready. Features 25+ resume templates, AI writing assistant, ATS score checker, streaming AI chat, mock interviews, and much more.
 
 ![Tech Stack](https://img.shields.io/badge/Stack-MERN%20%2B%20AI-blue)
 ![Frontend](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-green)
