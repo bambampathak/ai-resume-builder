@@ -10,17 +10,35 @@ export const downloadTextPDF = (text, fileName = "cover-letter.pdf") => {
     const maxWidth = pageWidth - margin * 2;
     const lineHeight = 7;
     pdf.setFont("times", "normal");
-    pdf.setFontSize(12);
-    const lines = pdf.splitTextToSize(text, maxWidth);
-    let cursorY = margin;
 
-    lines.forEach((line) => {
-        if (cursorY > pageHeight - margin) {
-            pdf.addPage();
-            cursorY = margin;
+    let cursorY = margin;
+    pdf.setFontSize(16);
+    pdf.setFont("times", "bold");
+    pdf.text("Cover Letter", margin, cursorY);
+    cursorY += lineHeight * 1.5;
+
+    pdf.setFontSize(12);
+    pdf.setFont("times", "normal");
+
+    const paragraphs = String(text)
+        .trim()
+        .split(/\n{2,}/g)
+        .map((paragraph) => paragraph.trim())
+        .filter(Boolean);
+
+    paragraphs.forEach((paragraph, paragraphIndex) => {
+        const lines = pdf.splitTextToSize(paragraph, maxWidth);
+        lines.forEach((line) => {
+            if (cursorY > pageHeight - margin) {
+                pdf.addPage();
+                cursorY = margin;
+            }
+            pdf.text(line, margin, cursorY);
+            cursorY += lineHeight;
+        });
+        if (paragraphIndex < paragraphs.length - 1) {
+            cursorY += lineHeight;
         }
-        pdf.text(line, margin, cursorY);
-        cursorY += lineHeight;
     });
 
     pdf.save(fileName);
