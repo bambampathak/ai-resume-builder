@@ -154,12 +154,32 @@ export const streamChatCompletion = async (messages, { temperature = 0.7 } = {})
 // Safe JSON parse
 export const safeJsonParse = (str) => {
   try {
+    // If it's already an object, return it directly
+    if (typeof str === "object" && str !== null) return str;
+
+    // Ensure we have a string
+    let cleaned = String(str || "").trim();
+
     // Strip markdown code fences if present
-    let cleaned = str.trim();
     if (cleaned.startsWith("```")) {
       cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, "").replace(/\n?```\s*$/, "");
     }
-    return JSON.parse(cleaned);
+
+    // Try direct parse first
+    try {
+      return JSON.parse(cleaned);
+    } catch (e) {
+      // Attempt to extract the first JSON object/array substring from the text
+      const match = cleaned.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+      if (match) {
+        try {
+          return JSON.parse(match[0]);
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    }
   } catch {
     return null;
   }
