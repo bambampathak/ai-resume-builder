@@ -98,11 +98,12 @@ const demoGenerateSummary = (messages) => {
 // ============================================================
 const demoAtsScore = (messages) => {
   const content = getUserContent(messages);
-  const hasSummary = /summary:/i.test(content);
-  const hasExperience = /experience:/i.test(content);
-  const hasEducation = /education:/i.test(content);
-  const hasSkills = /skills:/i.test(content);
-  const hasProjects = /projects:/i.test(content);
+  const hasContact = /\b[\w.+-]+@[\w-]+\.[\w.-]+\b/i.test(content) || /\b(phone|mobile|tel|contact)\b/i.test(content) || /\+?\d[\d\s().-]{7,}\d/.test(content);
+  const hasSummary = /\b(professional summary|summary|profile|about me|career objective|objective)\b/i.test(content);
+  const hasExperience = /\b(work experience|professional experience|employment history|career history|experience)\b/i.test(content);
+  const hasEducation = /\b(education|degree|bachelor|master|associate|high school|university|college)\b/i.test(content);
+  const hasSkills = /\bskills\b/i.test(content) || /\b(JavaScript|TypeScript|Python|React|Node\.js|AWS|Docker|SQL|MongoDB|Git|HTML|CSS|Java|Kotlin|Swift)\b/i.test(content);
+  const hasProjects = /\b(projects?|portfolio|selected work|project experience|selected projects)\b/i.test(content) || /\b(built|developed|created)\b.*\b(project|application|website|platform)\b/i.test(content);
 
   let score = 45;
   const problems = [];
@@ -110,42 +111,42 @@ const demoAtsScore = (messages) => {
   const sectionScores = {};
 
   // Contact
-  sectionScores.contact = /email:/i.test(content) ? 90 : 40;
-  if (sectionScores.contact < 90) {
+  sectionScores.contact = hasContact ? 90 : 40;
+  if (!hasContact) {
     problems.push({ type: "error", message: "Missing contact information (email, phone)", section: "contact" });
     suggestions.push("Add your email and phone number at the top of your resume");
   }
 
   // Summary
-  sectionScores.summary = hasSummary ? 80 : 30;
+  sectionScores.summary = hasSummary ? 80 : 35;
   if (!hasSummary) {
     problems.push({ type: "warning", message: "No professional summary found", section: "summary" });
     suggestions.push("Add a 3-4 sentence professional summary highlighting your key strengths");
   }
 
   // Experience
-  sectionScores.experience = hasExperience ? 75 : 35;
+  sectionScores.experience = hasExperience ? 75 : 45;
   if (!hasExperience) {
     problems.push({ type: "warning", message: "No work experience section detected", section: "experience" });
     suggestions.push("Add your work experience with quantified achievements");
   }
 
   // Education
-  sectionScores.education = hasEducation ? 85 : 50;
+  sectionScores.education = hasEducation ? 80 : 55;
   if (!hasEducation) {
     problems.push({ type: "warning", message: "Education section missing", section: "education" });
     suggestions.push("Include your educational qualifications");
   }
 
   // Skills
-  sectionScores.skills = hasSkills ? 85 : 30;
+  sectionScores.skills = hasSkills ? 85 : 40;
   if (!hasSkills) {
     problems.push({ type: "error", message: "No skills section found - critical for ATS", section: "skills" });
     suggestions.push("Add a dedicated skills section with relevant keywords");
   }
 
   // Projects
-  sectionScores.projects = hasProjects ? 70 : 45;
+  sectionScores.projects = hasProjects ? 70 : 50;
   if (!hasProjects) {
     problems.push({ type: "warning", message: "No projects section found", section: "projects" });
     suggestions.push("Add 2-3 relevant projects to showcase your skills");
@@ -164,8 +165,9 @@ const demoAtsScore = (messages) => {
   suggestions.push("Include keywords from the job description in your resume");
   suggestions.push("Use a clean, single-column layout for maximum ATS compatibility");
 
+  const foundKeywords = [...new Set((content.match(/\b(JavaScript|TypeScript|Python|React|Node\.js|AWS|Docker|SQL|MongoDB|Git|HTML|CSS|Java|Kotlin|Swift|TensorFlow|Figma|Azure|AWS|CI\/CD)\b/gi) || []).map((k) => k.trim()))];
   const keywords = {
-    found: hasSkills ? content.match(/Skills:\s*(.+?)(?:\n|$)/i)?.[1]?.split(",").map((s) => s.trim()).slice(0, 5) || [] : [],
+    found: foundKeywords.slice(0, 10),
     missing: ["leadership", "agile", "collaboration", "problem-solving", "communication"],
   };
 
