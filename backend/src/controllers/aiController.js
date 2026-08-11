@@ -145,15 +145,17 @@ Return ONLY valid JSON, no markdown.`,
       },
     ];
 
-    let result = await chatCompletion(messages, { json: true, temperature: 0.3, maxTokens: 1200 });
+    const aiResult = await chatCompletion(messages, { json: true, temperature: 0.3, maxTokens: 1200, debug: true });
+    let result = aiResult.content;
+    let aiMode = aiResult.usedDemo ? "demo" : "openai";
+    console.log(`[ATS] AI mode: ${aiMode}`);
     console.log(`[ATS] AI response length: ${String(result || "").length}`);
     console.log(`[ATS] AI response preview:\n${String(result || "").slice(0, 1500)}`);
     let parsed = safeJsonParse(result);
 
-    if (!parsed) console.warn('[ATS] Warning: initial JSON parse failed for AI response');
-
-    // If parsing failed, try the demo generator as a fallback to ensure consistent JSON
     if (!parsed) {
+      console.warn('[ATS] Warning: initial JSON parse failed for AI response');
+      aiMode = aiMode === "demo" ? "demo" : "fallback";
       console.log('[ATS] Falling back to demo generator for ATS analysis');
       const demo = generateDemoResponse(messages, { json: true });
       console.log(`[ATS] Demo response length: ${String(demo || "").length}`);
@@ -175,7 +177,7 @@ Return ONLY valid JSON, no markdown.`,
       }
     }
 
-    res.json({ success: true, report: parsed });
+    res.json({ success: true, report: parsed, aiMode });
   } catch (error) {
     next(error);
   }
@@ -233,13 +235,16 @@ Return ONLY valid JSON, no markdown.`,
       },
     ];
 
-    let result = await chatCompletion(messages, { json: true, temperature: 0.3, maxTokens: 1200 });
+    const aiResult = await chatCompletion(messages, { json: true, temperature: 0.3, maxTokens: 1200, debug: true });
+    let result = aiResult.content;
+    let aiMode = aiResult.usedDemo ? "demo" : "openai";
+    console.log(`[ATS-Upload] AI mode: ${aiMode}`);
     console.log(`[ATS-Upload] AI response length: ${String(result || "").length}`);
     console.log(`[ATS-Upload] AI response preview:\n${String(result || "").slice(0, 1500)}`);
     let parsed = safeJsonParse(result);
-    if (!parsed) console.warn('[ATS-Upload] Warning: initial JSON parse failed for AI response');
-
     if (!parsed) {
+      console.warn('[ATS-Upload] Warning: initial JSON parse failed for AI response');
+      aiMode = aiMode === "demo" ? "demo" : "fallback";
       console.log('[ATS-Upload] Falling back to demo generator for ATS analysis');
       const demo = generateDemoResponse(messages, { json: true });
       console.log(`[ATS-Upload] Demo response length: ${String(demo || "").length}`);
@@ -248,7 +253,7 @@ Return ONLY valid JSON, no markdown.`,
       if (!parsed) console.error('[ATS-Upload] Error: demo response JSON parse also failed');
     }
 
-    res.json({ success: true, report: parsed, fileName: req.file.originalname });
+    res.json({ success: true, report: parsed, fileName: req.file.originalname, aiMode });
   } catch (error) {
     next(error);
   }

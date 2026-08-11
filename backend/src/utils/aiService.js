@@ -31,11 +31,12 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // is thrown so the user is informed instead of receiving identical demo output.
 // Transient errors (429 rate limit, 5xx) are retried with exponential backoff
 // before falling back to demo mode.
-export const chatCompletion = async (messages, { json = false, temperature = 0.7, maxTokens = 1500 } = {}) => {
+export const chatCompletion = async (messages, { json = false, temperature = 0.7, maxTokens = 1500, debug = false } = {}) => {
   // Use demo mode if no API key configured or demo flag is set
   if (shouldUseDemo()) {
     console.log("🤖 [Demo Mode] Generating demo response (no valid AI API key)");
-    return generateDemoResponse(messages, { json });
+    const demoResponse = generateDemoResponse(messages, { json });
+    return debug ? { content: demoResponse, usedDemo: true, fallback: true } : demoResponse;
   }
 
   const openai = getClient();
@@ -56,7 +57,8 @@ export const chatCompletion = async (messages, { json = false, temperature = 0.7
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const response = await openai.chat.completions.create(params);
-      return response.choices[0].message.content;
+      const content = response.choices[0].message.content;
+      return debug ? { content, usedDemo: false, fallback: false } : content;
     } catch (error) {
       const status = error.status || "unknown";
       lastError = error;
@@ -88,7 +90,8 @@ export const chatCompletion = async (messages, { json = false, temperature = 0.7
       if (isBillingError) {
         console.warn("   💳 Billing/quota error detected — not retrying. Falling back to demo mode.");
         console.warn("   To fix: add credits at your AI provider's billing dashboard, or set USE_DEMO_AI=true in backend/.env.");
-        return generateDemoResponse(messages, { json });
+        const demoResponse = generateDemoResponse(messages, { json });
+        return debug ? { content: demoResponse, usedDemo: true, fallback: true } : demoResponse;
       }
 
       // Retry transient errors (429 rate limit, 5xx server errors, network)
@@ -105,7 +108,8 @@ export const chatCompletion = async (messages, { json = false, temperature = 0.7
 
   // All retries exhausted — fall back to demo mode for this request
   console.warn("   All retries exhausted. Falling back to demo mode for this request.");
-  return generateDemoResponse(messages, { json });
+  const demoResponse = generateDemoResponse(messages, { json });
+  return debug ? { content: demoResponse, usedDemo: true, fallback: true } : demoResponse;
 };
 
 // Streaming chat completion (for AI chat feature)
