@@ -76,6 +76,8 @@ const ResumePreview = ({ data, scale = 1 }) => {
       style={{
         width: "210mm",
         minHeight: "297mm",
+        padding: "20mm 18mm",
+        boxSizing: "border-box",
         transform: `scale(${scale})`,
         transformOrigin: "top center",
       }}
