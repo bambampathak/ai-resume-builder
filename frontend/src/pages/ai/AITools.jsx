@@ -27,6 +27,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import aiApi from "../../services/aiService.js";
 import api from "../../services/api.js";
+import { downloadTextPDF } from "../../utils/pdfGenerator.js";
 
 const tools = [
   { id: "ats", icon: Target, label: "ATS Score Checker", color: "text-green-500" },
@@ -424,7 +425,7 @@ function CoverLetter() {
           {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</> : <><FileText className="w-4 h-4" /> Generate Cover Letter</>}
         </button>
       </div>
-      {result && <ResultBox title="Cover Letter"><div className="flex justify-end mb-2"><CopyButton text={result} /></div><p className="text-sm whitespace-pre-wrap text-gray-700 dark:text-gray-300">{result}</p></ResultBox>}
+      {result && <ResultBox title="Cover Letter"><div className="flex justify-end mb-2 space-x-2"><button onClick={() => downloadTextPDF(result, `${form.company || "cover-letter"}.pdf`)} className="btn-secondary text-sm">Download PDF</button><CopyButton text={result} /></div><p className="text-sm whitespace-pre-wrap text-gray-700 dark:text-gray-300">{result}</p></ResultBox>}
     </div>
   );
 }

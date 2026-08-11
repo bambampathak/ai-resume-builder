@@ -345,23 +345,19 @@ export const generateCoverLetter = async (req, res, next) => {
       return next(new Error("Company and role are required"));
     }
 
+    const applicantName = userName || name || "the applicant";
+    const experienceText = experience || "relevant industry experience and achievements";
+    const skillsText = skills.length ? skills.join(", ") : "relevant skills and strengths";
+
     const messages = [
       {
         role: "system",
         content:
-          "You are an expert cover letter writer. Write a professional, personalized cover letter. Keep it 3-4 paragraphs. Use proper business letter format. Respond with ONLY the cover letter text.",
+          "You are an expert professional cover letter writer. Write a polished, personalized cover letter in formal business letter format. Use a greeting, 3-4 paragraphs, and a closing signature. Be concise, confident, and tailored to the target role. Respond with ONLY the cover letter text, without headings, Markdown, or lists.",
       },
       {
         role: "user",
-        content: `Write a cover letter for:
-- Applicant name: ${userName || "Not provided"}
-- Company: ${company}
-- Role: ${role}
-- Experience: ${experience || "Entry level"}
-- Key skills: ${skills.join(", ")}
-${jobDescription ? `- Job description highlights: ${jobDescription}` : ""}
-
-Cover letter:`,
+        content: `Write a cover letter for ${applicantName} applying for the role of ${role} at ${company}.\n- Experience: ${experienceText}\n- Key skills: ${skillsText}${jobDescription ? `\n- Job description: ${jobDescription}` : ""}\n\nBegin with "Dear Hiring Manager," unless a specific hiring manager name is provided. Close with a polite ending and the applicant's name. Write the cover letter now.`,
       },
     ];
 

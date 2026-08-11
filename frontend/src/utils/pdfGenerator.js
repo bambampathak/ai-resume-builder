@@ -1,6 +1,31 @@
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
+export const downloadTextPDF = (text, fileName = "cover-letter.pdf") => {
+    if (!text) return;
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const margin = 18;
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const maxWidth = pageWidth - margin * 2;
+    const lineHeight = 7;
+    pdf.setFont("times", "normal");
+    pdf.setFontSize(12);
+    const lines = pdf.splitTextToSize(text, maxWidth);
+    let cursorY = margin;
+
+    lines.forEach((line) => {
+        if (cursorY > pageHeight - margin) {
+            pdf.addPage();
+            cursorY = margin;
+        }
+        pdf.text(line, margin, cursorY);
+        cursorY += lineHeight;
+    });
+
+    pdf.save(fileName);
+};
+
 export const downloadResumePDF = async (elementId, fileName = "resume.pdf") => {
     const element = document.getElementById(elementId);
     if (!element) {
