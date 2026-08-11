@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Resumio logo</title>
+  <desc id="desc">A stylized document, letter R, and rising arrow representing career growth.</desc>
+  <defs>
+    <linearGradient id="resumioGradient" x1="88" y1="430" x2="418" y2="74" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#312e81"/>
+      <stop offset="0.48" stop-color="#6d28d9"/>
+      <stop offset="1" stop-color="#c026f5"/>
+    </linearGradient>
+    <linearGradient id="resumioHighlight" x1="136" y1="118" x2="385" y2="380" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8b5cf6" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#4f46e5" stop-opacity="0.15"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Document outline with folded corner -->
+  <path d="M112 62h227l72 72v70l-46 9v-56h-52c-25 0-45-20-45-45V108H112a18 18 0 0 0-18 18v198l-48 50V128c0-36 29-66 66-66Zm204 46v4h4l-4-4Z" fill="url(#resumioGradient)"/>
+
+  <!-- R stem and bowl -->
+  <path fill-rule="evenodd" d="M46 202h171c78 0 126 43 126 108 0 42-25 76-68 94l89 108h-72l-79-96H112v96H46V202Zm66 60v96h99c41 0 66-17 66-48 0-31-25-48-66-48h-99Z" fill="url(#resumioGradient)"/>
+
+  <!-- Rising career arrow, cut across the R for a forward-moving silhouette -->
+  <path d="M150 428c86-10 164-47 219-108l-38-38 135-29-12 138-40-40c-66 75-157 121-256 133l-58-56h50Z" fill="url(#resumioGradient)"/>
+  <path d="M151 428c81-11 153-46 207-104l11-12 22 22-12 13c-59 63-139 101-228 111v-30Z" fill="url(#resumioHighlight)" opacity="0.55"/>
+</svg>
