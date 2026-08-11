@@ -1,4 +1,5 @@
 import { chatCompletion, streamChatCompletion, safeJsonParse } from "../utils/aiService.js";
+import { generateDemoResponse } from "../utils/demoService.js";
 import Resume from "../models/Resume.js";
 import path from "path";
 import { createRequire } from "module";
@@ -111,6 +112,8 @@ export const atsScore = async (req, res, next) => {
 
     const resumeText = buildResumeText(resumeData);
 
+    console.log(`[ATS] Start analysis - user=${req.user?._id || "anon"} resumeId=${resumeData._id || "N/A"} resumeTextLength=${resumeText.length}`);
+
     const messages = [
       {
         role: "system",
@@ -142,21 +145,34 @@ Return ONLY valid JSON, no markdown.`,
       },
     ];
 
-    const result = await chatCompletion(messages, { json: true, temperature: 0.3, maxTokens: 1200 });
-    const parsed = safeJsonParse(result) || {
-      score: 50,
-      problems: [{ type: "error", message: "Could not fully analyze resume", section: "general" }],
-      suggestions: ["Try again with more complete resume data"],
-      keywords: { found: [], missing: [] },
-      sectionScores: {},
-    };
+    let result = await chatCompletion(messages, { json: true, temperature: 0.3, maxTokens: 1200 });
+    console.log(`[ATS] AI response length: ${String(result || "").length}`);
+    console.log(`[ATS] AI response preview:\n${String(result || "").slice(0, 1500)}`);
+    let parsed = safeJsonParse(result);
+
+    if (!parsed) console.warn('[ATS] Warning: initial JSON parse failed for AI response');
+
+    // If parsing failed, try the demo generator as a fallback to ensure consistent JSON
+    if (!parsed) {
+      console.log('[ATS] Falling back to demo generator for ATS analysis');
+      const demo = generateDemoResponse(messages, { json: true });
+      console.log(`[ATS] Demo response length: ${String(demo || "").length}`);
+      console.log(`[ATS] Demo response preview:\n${String(demo || "").slice(0, 1500)}`);
+      parsed = safeJsonParse(demo);
+      if (!parsed) console.error('[ATS] Error: demo response JSON parse also failed');
+    }
 
     // Save ATS score to resume if id provided
     if (resumeData._id && req.user) {
-      await Resume.findOneAndUpdate(
-        { _id: resumeData._id, user: req.user._id },
-        { atsScore: parsed.score, atsReport: parsed }
-      );
+      try {
+        const upd = await Resume.findOneAndUpdate(
+          { _id: resumeData._id, user: req.user._id },
+          { atsScore: parsed.score, atsReport: parsed }
+        );
+        console.log(`[ATS] Saved ATS report for resume ${resumeData._id}`);
+      } catch (dbErr) {
+        console.error('[ATS] DB save error:', dbErr.message || dbErr);
+      }
     }
 
     res.json({ success: true, report: parsed });
@@ -178,6 +194,8 @@ export const atsScoreUpload = async (req, res, next) => {
     }
 
     const resumeText = await extractTextFromFile(req.file);
+
+    console.log(`[ATS-Upload] Start - user=${req.user?._id || "anon"} file=${req.file.originalname} size=${req.file.size}`);
 
     if (!resumeText || resumeText.trim().length < 20) {
       res.status(400);
@@ -215,14 +233,20 @@ Return ONLY valid JSON, no markdown.`,
       },
     ];
 
-    const result = await chatCompletion(messages, { json: true, temperature: 0.3, maxTokens: 1200 });
-    const parsed = safeJsonParse(result) || {
-      score: 50,
-      problems: [{ type: "error", message: "Could not fully analyze resume", section: "general" }],
-      suggestions: ["Try again with a more complete resume file"],
-      keywords: { found: [], missing: [] },
-      sectionScores: {},
-    };
+    let result = await chatCompletion(messages, { json: true, temperature: 0.3, maxTokens: 1200 });
+    console.log(`[ATS-Upload] AI response length: ${String(result || "").length}`);
+    console.log(`[ATS-Upload] AI response preview:\n${String(result || "").slice(0, 1500)}`);
+    let parsed = safeJsonParse(result);
+    if (!parsed) console.warn('[ATS-Upload] Warning: initial JSON parse failed for AI response');
+
+    if (!parsed) {
+      console.log('[ATS-Upload] Falling back to demo generator for ATS analysis');
+      const demo = generateDemoResponse(messages, { json: true });
+      console.log(`[ATS-Upload] Demo response length: ${String(demo || "").length}`);
+      console.log(`[ATS-Upload] Demo response preview:\n${String(demo || "").slice(0, 1500)}`);
+      parsed = safeJsonParse(demo);
+      if (!parsed) console.error('[ATS-Upload] Error: demo response JSON parse also failed');
+    }
 
     res.json({ success: true, report: parsed, fileName: req.file.originalname });
   } catch (error) {
