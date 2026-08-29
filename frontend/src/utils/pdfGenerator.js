@@ -47,25 +47,50 @@ export const downloadTextPDF = (text, fileName = "cover-letter.pdf") => {
 export const downloadResumePDF = async (elementId, fileName = "resume.pdf") => {
     const element = document.getElementById(elementId);
     if (!element) {
-        console.error("Resume element not found");
-        return;
+        throw new Error(`Resume element #${elementId} not found in DOM`);
     }
 
-    // Temporarily reset scale for accurate capture
-    const originalTransform = element.style.transform;
-    const originalTransformOrigin = element.style.transformOrigin;
-    element.style.transform = "scale(1)";
-    element.style.transformOrigin = "top left";
+    // A4 at 96 dpi = 794px wide
+    const A4_WIDTH_PX = 794;
+
+    // Clone the element off-screen at full A4 size.
+    // This avoids issues with the live element being scaled, hidden, or clipped.
+    const clone = element.cloneNode(true);
+    Object.assign(clone.style, {
+        position: "fixed",
+        top: "-99999px",
+        left: "-99999px",
+        width: `${A4_WIDTH_PX}px`,
+        minHeight: "auto",
+        transform: "none",
+        transformOrigin: "top left",
+        zIndex: "-9999",
+        visibility: "visible",
+        display: "block",
+        overflow: "visible",
+        boxSizing: "border-box",
+        background: "#ffffff",
+        padding: "20mm 18mm",
+    });
+    document.body.appendChild(clone);
+
+    // Give the browser a moment to lay out the clone
+    await new Promise((resolve) => setTimeout(resolve, 150));
 
     try {
-        const canvas = await html2canvas(element, {
+        const canvas = await html2canvas(clone, {
             scale: 2,
             useCORS: true,
+            allowTaint: true,
             logging: false,
             backgroundColor: "#ffffff",
-            windowWidth: element.scrollWidth,
-            windowHeight: element.scrollHeight,
+            width: A4_WIDTH_PX,
+            windowWidth: A4_WIDTH_PX,
         });
+
+        if (!canvas || canvas.width === 0 || canvas.height === 0) {
+            throw new Error("Canvas render returned empty output");
+        }
 
         const imgData = canvas.toDataURL("image/png");
         const pdf = new jsPDF({
@@ -74,25 +99,22 @@ export const downloadResumePDF = async (elementId, fileName = "resume.pdf") => {
             format: "a4",
         });
 
-        const margin = 18;
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        const contentWidth = pdfWidth - margin * 2;
-        const contentHeight = pdfHeight - margin * 2;
-        const imgWidth = contentWidth;
-        const imgHeight = (canvas.height * contentWidth) / canvas.width;
+        const pdfWidth = pdf.internal.pageSize.getWidth();   // 210 mm
+        const pdfHeight = pdf.internal.pageSize.getHeight(); // 297 mm
+        const imgWidth = pdfWidth;
+        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
         let heightLeft = imgHeight;
-        let position = margin;
+        let position = 0;
 
-        pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
-        heightLeft -= contentHeight;
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
 
         while (heightLeft > 0) {
-            position = margin - (imgHeight - heightLeft);
+            position = -(imgHeight - heightLeft);
             pdf.addPage();
-            pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
-            heightLeft -= contentHeight;
+            pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+            heightLeft -= pdfHeight;
         }
 
         pdf.save(fileName);
@@ -100,9 +122,9 @@ export const downloadResumePDF = async (elementId, fileName = "resume.pdf") => {
         console.error("PDF generation failed:", error);
         throw error;
     } finally {
-        // Restore original styles
-        element.style.transform = originalTransform;
-        element.style.transformOrigin = originalTransformOrigin;
+        if (document.body.contains(clone)) {
+            document.body.removeChild(clone);
+        }
     }
 };
 
