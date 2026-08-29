@@ -72,6 +72,7 @@ const ResumePreview = ({ data, scale = 1 }) => {
 
   return (
     <div
+      id="resume-preview"
       className="resume-preview bg-white text-black shadow-lg mx-auto"
       style={{
         width: "210mm",
