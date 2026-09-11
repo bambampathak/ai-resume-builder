@@ -13,7 +13,6 @@
 
 ### Core Features
 | # | Feature | Description |
-|---|---------|-------------|
 | 1 | **User Authentication** | JWT-based auth with signup, login, forgot/reset password via email, optional Google OAuth |
 | 2 | **Dashboard** | Analytics cards (resumes, ATS score, downloads, views), quick actions, recent resumes with duplicate/delete/history menu |
 | 3 | **Resume Builder** | 8 sections (Personal Info, Experience, Education, Skills, Projects, Certifications, Languages, Interests) with add/remove, live preview, autosave |
