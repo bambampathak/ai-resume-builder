@@ -1,0 +1,4 @@
+# SPA fallback — serve index.html for client-side routes (e.g. /login, /signup).
+# Netlify-style format. On Render, also add a rewrite rule in the Static Site
+# settings: Source "/*" -> Destination "/index.html" (Action: Rewrite).
+/*    /index.html   200

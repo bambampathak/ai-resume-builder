@@ -19,11 +19,21 @@ app.set("trust proxy", 1);
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
 // CORS — support a comma-separated list of allowed origins so the same code
-// works locally and on deployed frontends (Vercel/Netlify, etc.)
+// works locally and on deployed frontends (Vercel/Netlify/Render, etc.)
 const allowedOrigins = (config.clientUrl || "")
     .split(",")
-    .map((origin) => origin.trim())
+    .map((origin) => origin.trim().replace(/\/$/, ""))
     .filter(Boolean);
+
+// Hosting providers whose preview/production URLs we trust automatically.
+// This avoids "Network Error" (blocked CORS preflight) when the frontend is
+// deployed on a different provider than the backend.
+const TRUSTED_HOST_PATTERNS = [
+    /^https:\/\/[a-z0-9-]+\.vercel\.app$/i,          // Vercel (prod + preview)
+    /^https:\/\/[a-z0-9-]+\.onrender\.com$/i,        // Render (web service + static)
+    /^https:\/\/[a-z0-9-]+\.netlify\.app$/i,         // Netlify
+    /^https:\/\/[a-z0-9-]+\.githubpreview\.dev$/i,   // GitHub Codespaces preview
+];
 
 app.use(
     cors({
@@ -32,10 +42,12 @@ app.use(
             if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
                 return callback(null, true);
             }
-            // Also allow Vercel preview deployments of the configured frontend.
-            if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) {
+            // Allow trusted hosting-provider origins.
+            if (TRUSTED_HOST_PATTERNS.some((pattern) => pattern.test(origin))) {
                 return callback(null, true);
             }
+            // Log the rejection to make misconfigurations easier to diagnose.
+            console.warn(`⚠️  CORS blocked origin: ${origin}. Add it to CLIENT_URL.`);
             return callback(null, false);
         },
         credentials: true,
