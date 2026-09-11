@@ -5,9 +5,12 @@ import path from "path";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
-// pdf-parse and mammoth are CommonJS modules
-const pdfParse = require("pdf-parse");
-const mammoth = require("mammoth");
+
+// pdf-parse and mammoth are CommonJS modules. Load them lazily (only when a file
+// is actually parsed) so a require-time failure can't crash the serverless
+// function during a cold start.
+const loadPdfParse = () => require("pdf-parse");
+const loadMammoth = () => require("mammoth");
 
 // ============================================================
 // 1. AI WRITING ASSISTANT - improve experience/project/summary
@@ -267,11 +270,13 @@ const extractTextFromFile = async (file) => {
   const buffer = file.buffer;
 
   if (ext === ".pdf") {
+    const pdfParse = loadPdfParse();
     const data = await pdfParse(buffer);
     return data.text;
   }
 
   if (ext === ".docx" || ext === ".doc") {
+    const mammoth = loadMammoth();
     const result = await mammoth.extractRawText({ arrayBuffer: buffer });
     return result.value;
   }

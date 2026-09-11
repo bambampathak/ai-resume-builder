@@ -304,7 +304,16 @@ Visit **http://localhost:5173** 🎉
 4. Add environment variable `VITE_API_URL`
 5. Deploy
 
-### Backend → Render
+### Backend → Vercel
+1. Push to GitHub
+2. Import the repo in Vercel
+3. Set **Root Directory** to `backend` (Framework Preset: `Other`, no build command)
+4. Add all environment variables (`NODE_ENV=production`, `MONGO_URI`, `JWT_SECRET`, `CLIENT_URL`, `OPENAI_API_KEY`, …)
+5. Deploy — the API is served via the serverless function at [`backend/api/index.js`](backend/api/index.js)
+
+See [`backend/DEPLOY_VERCEL.md`](backend/DEPLOY_VERCEL.md) for the full step-by-step guide and troubleshooting.
+
+### Backend → Render (alternative)
 1. Push to GitHub
 2. Create new Web Service in Render
 3. Set root directory to `backend`
